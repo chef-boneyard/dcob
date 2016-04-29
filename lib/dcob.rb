@@ -44,32 +44,37 @@ module Dcob
   end
 end
 
-
-if !File.exists?("config.toml")
-  puts "You need to provide a config.toml"
-  exit 1
-end
-
-config = TOML.load_file("config.toml")
-if config["cfg"]["login"]
-  Octokit.login = config["cfg"]["login"]
+if ENV["GITHUB_LOGIN"] && ENV["GITHUB_ACCESS_TOKEN"] && ENV["GITHUB_SECRET_TOKEN"]
+  Octokit.login = ENV["GITHUB_LOGIN"]
+  Octokit.access_token = ENV["GITHUB_ACCESS_TOKEN"]
+  SECRET_TOKEN = ENV["GITHUB_SECRET_TOKEN"]
 else
-  puts "You must specify cfg.login in config.toml"
-  exit 1
-end
+  if !File.exists?("config.toml")
+    puts "You need to provide a config.toml"
+    exit 1
+  end
 
-if config["cfg"]["access_token"]
-  Octokit.access_token = config["cfg"]["access_token"]
-else
-  puts "You must specify cfg.access_token in config.toml"
-  exit 1
-end
+  config = TOML.load_file("config.toml")
+  if config["cfg"]["login"] 
+    Octokit.login = config["cfg"]["login"]
+  else
+    puts "You must specify cfg.login in config.toml"
+    exit 1
+  end
 
-if config["cfg"]["secret_token"]
-  SECRET_TOKEN = config["cfg"]["secret_token"]
-else
-  puts "You must specify cfg.secret_token in config.toml"
-  exit 1
+  if config["cfg"]["access_token"]
+    Octokit.access_token = config["cfg"]["access_token"]
+  else
+    puts "You must specify cfg.access_token in config.toml"
+    exit 1
+  end
+
+  if config["cfg"]["secret_token"]
+    SECRET_TOKEN = config["cfg"]["secret_token"]
+  else
+    puts "You must specify cfg.secret_token in config.toml"
+    exit 1
+  end
 end
 
 Dcob::Server.run!
