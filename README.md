@@ -6,6 +6,8 @@ This is a github bot to ensure every commit on a PR has the `Signed-off-by` attr
 
 Check out the source, run `bundle install`, then `bundle exec exe/dcob`.
 
+This is also easy to run on heroku; clone the repo, push it to heroku, set the environment variables and configure the webhook/access token. Viola!
+
 ## Configuration
 
 The bot requires a toml configuration file with three settings:
@@ -15,6 +17,14 @@ The bot requires a toml configuration file with three settings:
 login = "GITHUB_USERNAME"
 access_token = "GITHUB_ACCESS_TOKEN"
 secret_token = "SECRET_TOKEN"
+```
+
+These can also be set in your environment:
+
+```
+GITHUB_LOGIN
+GITHUB_ACCESS_TOKEN
+GITHUB_SECRET_TOKEN
 ```
 
 The login is a github username; the access token is a personal access token
