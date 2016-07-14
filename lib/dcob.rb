@@ -13,20 +13,21 @@ module Dcob
       payload_body = request.body.read
       verify_signature(payload_body)
       pr = JSON.parse(payload_body)
+      repo_id = pr["repository"]["id"]
       if pr["action"] == "opened" || pr["action"] == "synchronize" || pr["action"] == "reopened"
         puts "Processing #{pr["pull_request"]["head"]["repo"]["name"]} ##{pr["number"]}"
-        commits = Octokit.pull_request_commits(pr["pull_request"]["head"]["repo"]["id"], pr["number"])
+        commits = Octokit.pull_request_commits(repo_id, pr["number"])
         commits.each do |commit|
           if commit[:commit][:message] !~ /Signed-off-by: .+ <.+>/
             puts "Flagging SHA #{commit["sha"]} as failed; no DCO"
-            Octokit.create_status(pr["pull_request"]["head"]["repo"]["id"],
+            Octokit.create_status(repo_id,
                                   commit["sha"],
                                   "failure",
                                   :context => "DCO",
                                   :description => "This commit does not have a DCO Signed-off-by")
           else
             puts "Flagging SHA #{commit["sha"]} as succeeded; has DCO"
-            Octokit.create_status(pr["pull_request"]["head"]["repo"]["id"],
+            Octokit.create_status(repo_id,
                                   commit["sha"],
                                   "success",
                                   :context => "DCO",
