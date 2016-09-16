@@ -18,7 +18,8 @@ pkg_build_deps=(
   core/git
 )
 pkg_bin_dirs=(bin)
-pkg_svc_run="bin/dcob"
+pkg_svc_run="bin/dcob -o 0.0.0.0"
+pkg_expose=(4567)
 
 do_download() {
   return 0
@@ -32,23 +33,22 @@ do_unpack() {
   return 0
 }
 
-do_prepare() {
+do_build() {
+  return 0
+}
+
+do_install () {
   # Create a Gemfile with what we need
   cat > Gemfile <<GEMFILE
 source 'https://rubygems.org'
 gem 'dcob', path: '$pkg_prefix'
 GEMFILE
-}
-
-do_build() {
   export BUNDLE_SILENCE_ROOT_WARNING=1 GEM_PATH
   GEM_PATH="$(pkg_path_for core/bundler)"
   cp -a "$PLAN_CONTEXT/.." "$pkg_prefix"
   bundle install --jobs "$(nproc)" --retry 5 --standalone \
     --path "$pkg_prefix/bundle" \
     --binstubs "$pkg_prefix/bin"
-}
 
-do_install () {
   fix_interpreter "$pkg_prefix/bin/*" core/coreutils bin/env
 }
