@@ -24,14 +24,15 @@ module Dcob
                                   commit["sha"],
                                   "failure",
                                   :context => "DCO",
-                                  :description => "This commit does not have a DCO Signed-off-by",
-                                  :target_url => "https://github.com/chef/chef/blob/master/CONTRIBUTING.md#developer-certification-of-origin-dco")
+                                  :target_url => DCO_INFO_URL,
+                                  :description => "This commit does not have a DCO Signed-off-by")
           else
             puts "Flagging SHA #{commit["sha"]} as succeeded; has DCO"
             Octokit.create_status(repo_id,
                                   commit["sha"],
                                   "success",
                                   :context => "DCO",
+                                  :target_url => DCO_INFO_URL,
                                   :description => "This commit has a DCO Signed-off-by")
           end
         end
@@ -50,6 +51,7 @@ if ENV["GITHUB_LOGIN"] && ENV["GITHUB_ACCESS_TOKEN"] && ENV["GITHUB_SECRET_TOKEN
   Octokit.login = ENV["GITHUB_LOGIN"]
   Octokit.access_token = ENV["GITHUB_ACCESS_TOKEN"]
   SECRET_TOKEN = ENV["GITHUB_SECRET_TOKEN"]
+  DCO_INFO_URL = ENV["DCO_INFO_URL"] || "http://developercertificate.org/"
 else
   if !File.exists?("config.toml")
     puts "You need to provide a config.toml"
@@ -75,6 +77,13 @@ else
     SECRET_TOKEN = config["cfg"]["secret_token"]
   else
     puts "You must specify cfg.secret_token in config.toml"
+    exit 1
+  end
+
+  if config["cfg"]["dco_info_url"]
+    DCO_INFO_URL = config["cfg"]["dco_info_url"]
+  else
+    puts "You must specify cfg.dco_info_url in config.toml"
     exit 1
   end
 end

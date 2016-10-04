@@ -6,3 +6,6 @@ access_token = ""
 
 # The secret token, specified in the GitHub webhook
 secret_token = ""
+
+# The target_url to supply for all DCO status checks at GitHub
+dco_info_url = "http://developercertificate.org/"
