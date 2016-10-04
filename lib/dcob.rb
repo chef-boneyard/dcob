@@ -24,7 +24,8 @@ module Dcob
                                   commit["sha"],
                                   "failure",
                                   :context => "DCO",
-                                  :description => "This commit does not have a DCO Signed-off-by")
+                                  :description => "This commit does not have a DCO Signed-off-by",
+                                  :target_url => "https://github.com/chef/chef/blob/master/CONTRIBUTING.md#developer-certification-of-origin-dco")
           else
             puts "Flagging SHA #{commit["sha"]} as succeeded; has DCO"
             Octokit.create_status(repo_id,
@@ -56,7 +57,7 @@ else
   end
 
   config = TOML.load_file("config.toml")
-  if config["cfg"]["login"] 
+  if config["cfg"]["login"]
     Octokit.login = config["cfg"]["login"]
   else
     puts "You must specify cfg.login in config.toml"
