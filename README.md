@@ -17,6 +17,7 @@ The bot requires a toml configuration file with three settings:
 login = "GITHUB_USERNAME"
 access_token = "GITHUB_ACCESS_TOKEN"
 secret_token = "SECRET_TOKEN"
+dco_info_url = "https://a.webpage.explaining.what.the.dco.is/and.how.to.sign-off"
 ```
 
 These can also be set in your environment:
@@ -25,11 +26,13 @@ These can also be set in your environment:
 GITHUB_LOGIN
 GITHUB_ACCESS_TOKEN
 GITHUB_SECRET_TOKEN
+DCO_INFO_URL
 ```
 
 The login is a github username; the access token is a personal access token
 that has the Repo privilege. The secret token is the one you specify when you
-add the bot as a webhook.
+add the bot as a webhook. The DCO info URL should lead to a page about the
+Developer Certificate of Origin and how contributors can sign-off their commits.
 
 ## Development
 
