@@ -10,3 +10,4 @@
 /config.toml
 /results/
 /vendor/
+*.gem

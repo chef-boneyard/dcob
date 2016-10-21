@@ -29,9 +29,9 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.10"
   spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_development_dependency "rspec"
+  spec.add_development_dependency "rspec", "~> 3.4"
 
-  spec.add_dependency "octokit"
-  spec.add_dependency "sinatra"
-  spec.add_dependency "toml-rb"
+  spec.add_dependency "octokit", "~> 4.3"
+  spec.add_dependency "sinatra", "~> 1.4"
+  spec.add_dependency "toml-rb", "~> 0.3"
 end
