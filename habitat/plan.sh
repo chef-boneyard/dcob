@@ -13,12 +13,9 @@ pkg_deps=(
 )
 pkg_build_deps=(
   core/bundler
-  core/cacerts
-  core/coreutils
   core/git
 )
 pkg_bin_dirs=(bin)
-pkg_svc_run="dcob -o 0.0.0.0"
 pkg_expose=(4567)
 
 do_download() {
@@ -34,21 +31,22 @@ do_unpack() {
 }
 
 do_build() {
-  return 0
+  cd $PLAN_CONTEXT/../src
+  # Build then unpack the gem to the source cache path to limit the
+  # files packaged to those defined as included in the gemspec
+  gem build $pkg_name.gemspec
+  gem unpack $pkg_name-$pkg_version.gem --target=$HAB_CACHE_SRC_PATH
 }
 
 do_install () {
-  # Create a Gemfile with what we need
-  cat > Gemfile <<GEMFILE
-source 'https://rubygems.org'
-gem 'dcob', path: '$pkg_prefix'
-GEMFILE
+  export GIT_DIR=$PLAN_CONTEXT/../.git # appease the git command in the gemspec
   export BUNDLE_SILENCE_ROOT_WARNING=1 GEM_PATH
   GEM_PATH="$(pkg_path_for core/bundler)"
-  cp -a "$PLAN_CONTEXT/.." "$pkg_prefix"
-  bundle install --jobs "$(nproc)" --retry 5 --standalone \
-    --path "$pkg_prefix/bundle" \
-    --binstubs "$pkg_prefix/bin"
 
-  fix_interpreter "$pkg_prefix/bin/*" core/coreutils bin/env
+  bundle install --jobs "$(nproc)" --retry 5 --standalone \
+    --path "bundle" \
+    --binstubs
+
+  fix_interpreter "bin/*" core/coreutils bin/env
+  cp -a "." "$pkg_prefix"
 }
