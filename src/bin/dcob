@@ -2,7 +2,9 @@
 
 require 'pathname'
 path = Pathname.new(__FILE__)
+$LOAD_PATH.unshift File.expand_path '../../bundle', path.realpath
 $LOAD_PATH.unshift File.expand_path '../../lib', path
 
+require 'bundler/setup'
 require "dcob"
 Dcob::Server.run!

@@ -16,6 +16,7 @@ pkg_build_deps=(
   core/git
 )
 pkg_bin_dirs=(bin)
+pkg_svc_run="dcob -o 0.0.0.0"
 pkg_expose=(4567)
 
 do_download() {
