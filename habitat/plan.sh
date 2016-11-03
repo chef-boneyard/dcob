@@ -45,6 +45,7 @@ do_install () {
   GEM_PATH="$(pkg_path_for core/bundler)"
 
   bundle install --jobs "$(nproc)" --retry 5 --standalone \
+    --without development \
     --path "bundle" \
     --binstubs
 

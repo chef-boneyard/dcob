@@ -1,0 +1,6 @@
+[cfg]
+login = "Testy McTestface"
+access_token = "this_is_not_a_real_access_token"
+secret_token = "this_is_not_a_real_secret_token"
+dco_info_url = "http://developercertificate.org/"
+dco_webhook_url = "https://mctestface.org/payload"
