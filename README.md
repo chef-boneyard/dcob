@@ -29,10 +29,18 @@ GITHUB_SECRET_TOKEN
 DCO_INFO_URL
 ```
 
-The login is a github username; the access token is a personal access token
-that has the Repo privilege. The secret token is the one you specify when you
-add the bot as a webhook. The DCO info URL should lead to a page about the
-Developer Certificate of Origin and how contributors can sign-off their commits.
+The login is a github username.
+
+The access token is a personal access token for the github user specified for
+login. The access token must have the following privileges:
+
+* admin:repo_hook to create webhooks on create or publicized repositories
+* repo:status to create statuses on commits in a repo
+
+The secret token is the one you specify when you add the bot as a webhook.
+
+The DCO info URL should lead to a page about the Developer Certificate of Origin
+and how contributors can sign-off their commits.
 
 ## Development
 
