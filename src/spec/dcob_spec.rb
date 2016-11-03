@@ -23,7 +23,7 @@ describe "DCO Bot webhook server" do
   context "processing repository events" do
     let(:headers) do
       { "CONTENT_TYPE" => "application/json",
-        "X-GitHub-Event" => "repository",
+        "HTTP_X_GITHUB_EVENT" => "repository",
         "HTTP_X_HUB_SIGNATURE" => "nope" }
     end
 
