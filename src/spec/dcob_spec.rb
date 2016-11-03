@@ -13,6 +13,13 @@ describe "DCO Bot webhook server" do
     Dcob::Server
   end
 
+  context "random connections" do
+    it "get a 500" do
+      get "/"
+      expect(last_response).to_not be_ok
+    end
+  end
+
   context "processing repository events" do
     let(:headers) do
       { "CONTENT_TYPE" => "application/json",
@@ -22,7 +29,7 @@ describe "DCO Bot webhook server" do
 
     it "does nothing with an empty post to repo webhook" do
       post "/payload", "", headers
-      expect(last_response).to_not be_ok
+      expect(last_response.status).to eq(500)
     end
 
     it "adds the push payload webhook to a new public repository" do

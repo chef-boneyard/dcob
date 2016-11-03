@@ -11,8 +11,9 @@ module Dcob
   class Server < Sinatra::Base
     before do
       @payload_body = request.body.read
-      signature = "sha1=" + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha1"), SECRET_TOKEN, @payload_body)
-      return halt 500, "Signatures didn't match!" unless Rack::Utils.secure_compare(signature, request.env["HTTP_X_HUB_SIGNATURE"])
+      request_signature = request.env.fetch("HTTP_X_HUB_SIGNATURE", '')
+      check_signature = "sha1=" + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha1"), SECRET_TOKEN, @payload_body)
+      return halt 500, "Signatures didn't match!" unless Rack::Utils.secure_compare(check_signature, request_signature)
     end
 
     set(:event_type) do |type|
