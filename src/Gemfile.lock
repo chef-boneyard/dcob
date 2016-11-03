@@ -63,7 +63,7 @@ GEM
     rack-test (0.6.3)
       rack (>= 1.0)
     rainbow (2.1.0)
-    rake (10.5.0)
+    rake (11.3.0)
     rb-fsevent (0.9.7)
     rb-inotify (0.9.7)
       ffi (>= 0.5.0)
@@ -113,13 +113,13 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.10)
+  bundler (~> 1.12)
   chefstyle (~> 0.4)
   dcob!
   guard
   guard-rspec
   rack-test (~> 0.6)
-  rake (~> 10.0)
+  rake (~> 11.3)
   rb-readline
   rspec (~> 3.4)
   webmock (~> 2.1)
