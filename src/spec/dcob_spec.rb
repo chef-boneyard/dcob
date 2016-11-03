@@ -20,6 +20,23 @@ describe "DCO Bot webhook server" do
     end
   end
 
+  context "processing pings" do
+    let(:headers) do
+      { "CONTENT_TYPE" => "application/json",
+        "HTTP_X_GITHUB_EVENT" => "ping",
+        "HTTP_X_HUB_SIGNATURE" => "nope" }
+    end
+
+    it "sends happiness back to GitHub" do
+      payload_body = File.read("spec/support/fixtures/webhook_ping.json")
+      request_signature = "sha1=" + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha1"), "this_is_not_a_real_secret_token", payload_body)
+      headers["HTTP_X_HUB_SIGNATURE"] = request_signature
+
+      post "/payload", payload_body, headers
+      expect(last_response).to match("PONG")
+    end
+  end
+
   context "processing repository events" do
     let(:headers) do
       { "CONTENT_TYPE" => "application/json",

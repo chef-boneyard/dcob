@@ -20,13 +20,19 @@ module Dcob
       condition { request.env["HTTP_X_GITHUB_EVENT"] == type }
     end
 
+    post "/payload", event_type: "ping" do
+      ping = JSON.parse(@payload_body)
+      logger.info ping
+      [200, {}, "PONG"]
+    end
+
     post "/payload", event_type: "repository" do
       begin
         repo = JSON.parse(@payload_body)
         if !repo["repository"]["private"] && %w{created publicized}.include?(repo["action"])
           callback_url = request.url
           result = Dcob::Octoclient.hookit(repo["repository"]["full_name"], callback_url)
-          [200, {}, result]
+          [200, {}, "Hooked #{repo["repository"]["full_name"]}"]
         else
           [200, {}, "Nothing to do here."]
         end
