@@ -1,0 +1,14 @@
+#!/bin/sh
+cd /hab/svc/dcob
+
+export RACK_ENV=production
+export SSL_CERT_FILE="$(hab pkg path core/cacerts)/ssl/certs/cacert.pem"
+
+if [ "$(whoami)" = "root" ]; then
+  exec chpst \
+    -U hab:hab \
+    -u hab:hab \
+    dcob -o 0.0.0.0 2>&1
+else
+  exec dcob -o 0.0.0.0 2>&1
+fi

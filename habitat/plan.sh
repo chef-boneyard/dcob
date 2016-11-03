@@ -8,6 +8,7 @@ pkg_maintainer="The Habitat Maintainers <humans@habitat.sh>"
 pkg_license=('MIT')
 pkg_source=false
 pkg_deps=(
+  core/cacerts
   core/coreutils
   core/ruby
 )
@@ -16,7 +17,6 @@ pkg_build_deps=(
   core/git
 )
 pkg_bin_dirs=(bin)
-pkg_svc_run="dcob -o 0.0.0.0"
 pkg_expose=(4567)
 
 do_download() {
