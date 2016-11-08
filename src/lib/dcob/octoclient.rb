@@ -13,9 +13,23 @@ module Dcob
                       secret: SECRET_TOKEN }
       hook_options = { events: ["pull_request"],
                        active: true }
-      Octokit.create_hook(repository, github_service_name, hook_config, hook_options)
+      begin
+        retries ||= 0
+        client.create_hook(repository, github_service_name, hook_config, hook_options)
+      rescue Octokit::NotFound, Faraday::TimeoutError => e
+        if (retries += 1) < 3
+          sleep retries * 10 if ENV["RACK_ENV"] == "production"
+          retry
+        else
+          raise e
+        end
+      end
     rescue Octokit::UnprocessableEntity => e
       "Skipping #{repository} due to existing hook"
+    end
+
+    def client
+      Octokit.client
     end
   end
 end
