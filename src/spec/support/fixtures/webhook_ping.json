@@ -1,0 +1,33 @@
+{
+  "zen": "Mind your words, they are important.",
+  "hook_id": 10571475,
+  "hook": {
+    "type": "Repository",
+    "id": 10571475,
+    "name": "web",
+    "active": true,
+    "events": [
+      "pull_request"
+    ],
+    "config": {
+      "content_type": "json",
+      "secret": "********",
+      "url": "http://54.146.255.62:4567/payload"
+    },
+    "updated_at": "2016-11-03T21:10:53Z",
+    "created_at": "2016-11-03T21:10:53Z",
+    "url": "https://api.github.com/repos/poboy/canary/hooks/10571475",
+    "test_url": "https://api.github.com/repos/poboy/canary/hooks/10571475/test",
+    "ping_url": "https://api.github.com/repos/poboy/canary/hooks/10571475/pings",
+    "last_response": {
+      "code": null,
+      "status": "unused",
+      "message": null
+    }
+  },
+  "repository": {
+    "id": 72785660,
+    "name": "canary",
+    "full_name": "poboy/canary"
+  }
+}

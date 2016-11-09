@@ -8,6 +8,7 @@ pkg_maintainer="The Habitat Maintainers <humans@habitat.sh>"
 pkg_license=('MIT')
 pkg_source=false
 pkg_deps=(
+  core/cacerts
   core/coreutils
   core/ruby
 )
@@ -45,6 +46,7 @@ do_install () {
   GEM_PATH="$(pkg_path_for core/bundler)"
 
   bundle install --jobs "$(nproc)" --retry 5 --standalone \
+    --without development \
     --path "bundle" \
     --binstubs
 
