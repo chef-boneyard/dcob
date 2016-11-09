@@ -10,7 +10,37 @@ This is also easy to run on heroku; clone the repo, push it to heroku, set the e
 
 ## Configuration
 
-The bot requires a toml configuration file with three settings:
+The bot is written to support the 12Factor philosophy of configuration via
+environment variables.
+
+### _must_ be set in the environment:
+
+* **RACK_ENV** :: set to `"production"` in production
+* **SSL_CERT_FILE** :: path to a cacerts PEM file; there is one included in the
+  dependencies of the bot, the path to which is available at `"$(hab pkg path core/cacerts)/ssl/certs/cacert.pem"`
+
+### can be set in the environment or via toml files:
+
+* **GITHUB_LOGIN** :: the username of the GitHub account through which the bot
+  will take action
+* **GITHUB_ACCESS_TOKEN** :: a personal access token for the GitHub user
+  specified for login; the access token must have the following privileges:
+    * `admin:repo_hook` to create webhooks on create or publicized repositories
+    * `repo:status` to create statuses on commits in a repo
+* **GITHUB_SECRET_TOKEN** :: [a shared secret for the GitHub
+  webhooks](https://developer.github.com/webhooks/securing/) for authenticating
+  incoming webhook payloads
+* **DCO_INFO_URL** :: (optional) a URL to associate with a commit check result;
+  defaults to a link to the text of the Developer Certificate of Origin itself,
+  but we recommend setting this to link to a more detailed explanation of how
+  your project uses the DCO and ways in which contributors can sign-off on their
+  commits.
+
+These settings can also be set from a toml config file, but note that the
+environment variables take precedence. The advantage of configuring these
+settings via toml is that the Habitat supervisor will detect when they are
+changed and handle restarting the bot service to activate the new configuration.
+The toml file format looks like:
 
 ```toml
 [cfg]
@@ -19,28 +49,6 @@ access_token = "GITHUB_ACCESS_TOKEN"
 secret_token = "SECRET_TOKEN"
 dco_info_url = "https://a.webpage.explaining.what.the.dco.is/and.how.to.sign-off"
 ```
-
-These can also be set in your environment:
-
-```
-GITHUB_LOGIN
-GITHUB_ACCESS_TOKEN
-GITHUB_SECRET_TOKEN
-DCO_INFO_URL
-```
-
-The login is a github username.
-
-The access token is a personal access token for the github user specified for
-login. The access token must have the following privileges:
-
-* admin:repo_hook to create webhooks on create or publicized repositories
-* repo:status to create statuses on commits in a repo
-
-The secret token is the one you specify when you add the bot as a webhook.
-
-The DCO info URL should lead to a page about the Developer Certificate of Origin
-and how contributors can sign-off their commits.
 
 ## Development
 
