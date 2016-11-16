@@ -36,12 +36,16 @@ module Dcob
       commits = client.pull_request_commits(repository_id, pr_number)
       # using map to return a collection of status creation responses
       commits.map do |commit|
-        if commit[:commit][:message] !~ /Signed-off-by: .+ <.+>/
-          puts "Flagging SHA #{commit[:sha]} as failed; no DCO"
-          dco_check_failure(repository_id, commit[:sha])
-        else
+        case commit[:commit][:message]
+        when /Signed-off-by: .+ <.+>/
           puts "Flagging SHA #{commit[:sha]} as succeeded; has DCO"
           dco_check_success(repository_id, commit[:sha])
+        when /obvious fix/i
+          puts "Flagging SHA #{commit[:sha]} as succeeded; obvious fix declared"
+          obvious_fix_check_success(repository_id, commit[:sha])
+        else
+          puts "Flagging SHA #{commit[:sha]} as failed; no DCO"
+          dco_check_failure(repository_id, commit[:sha])
         end
       end
     end
@@ -62,6 +66,15 @@ module Dcob
                            context: "DCO",
                            target_url: DCO_INFO_URL,
                            description: "This commit does not have a DCO Signed-off-by")
+    end
+
+    def obvious_fix_check_success(repository_id, commit_sha)
+      client.create_status(repository_id,
+                           commit_sha,
+                           "success",
+                           context: "DCO",
+                           target_url: DCO_INFO_URL,
+                           description: "This commit declared that it is an obvious fix")
     end
 
     def client

@@ -104,6 +104,16 @@ describe Dcob::Octoclient do
       expect(subject).to receive(:dco_check_success).once
       subject.apply_commit_statuses(123, 456)
     end
+
+    it "sets OK status on commits invoking the obvious fix rule" do
+      obvious_fixes = commit_factory [
+        "This is an obvious fix.",
+        "This is an Obvious fix, too.",
+      ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(obvious_fixes)
+      expect(subject).to receive(:obvious_fix_check_success).twice
+      subject.apply_commit_statuses(123, 456)
+    end
   end
 
   describe "#dco_check_success" do
