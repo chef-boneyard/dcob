@@ -44,28 +44,9 @@ module Dcob
     post "/payload", event_type: "pull_request" do
       pr = JSON.parse(@payload_body)
       repo_id = pr["repository"]["id"]
-      if pr["action"] == "opened" || pr["action"] == "synchronize" || pr["action"] == "reopened"
+      if %w{opened reopened synchronize}.include? pr["action"]
         puts "Processing #{pr['pull_request']['head']['repo']['name']} ##{pr['number']}"
-        commits = Octokit.pull_request_commits(repo_id, pr["number"])
-        commits.each do |commit|
-          if commit[:commit][:message] !~ /Signed-off-by: .+ <.+>/
-            puts "Flagging SHA #{commit['sha']} as failed; no DCO"
-            Octokit.create_status(repo_id,
-                                  commit["sha"],
-                                  "failure",
-                                  context: "DCO",
-                                  target_url: DCO_INFO_URL,
-                                  description: "This commit does not have a DCO Signed-off-by")
-          else
-            puts "Flagging SHA #{commit['sha']} as succeeded; has DCO"
-            Octokit.create_status(repo_id,
-                                  commit["sha"],
-                                  "success",
-                                  context: "DCO",
-                                  target_url: DCO_INFO_URL,
-                                  description: "This commit has a DCO Signed-off-by")
-          end
-        end
+        Dcob::Octoclient.apply_commit_statuses(repo_id, pr["number"])
       end
       "Please Drive Through!"
     end
