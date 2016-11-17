@@ -74,21 +74,46 @@ describe Dcob::Octoclient do
       end
     end
 
-    it "sets OK status on commits with signed-offs" do
-      all_commits_signed_off = commit_factory [
+    context "on commits with signed-offs" do
+      it "sets OK when there are dashes" do
+        all_commits_signed_off = commit_factory [
           "Fix all the bugs.\n\nSigned-off-by: Fix-It Felix Jr. <felixjr@fixit.example.com>",
           "Missed some.\n\nSigned-off-by: Fix-It Felix Jr. <felixjr@fixit.example.com>",
         ]
-      allow(subject.client).to receive(:pull_request_commits).and_return(all_commits_signed_off)
-      expect(subject).to receive(:dco_check_success).twice
-      subject.apply_commit_statuses(123, 456)
+        allow(subject.client).to receive(:pull_request_commits).and_return(all_commits_signed_off)
+        expect(subject).to receive(:dco_check_success).twice
+        expect(subject).not_to receive(:dco_check_failure)
+        subject.apply_commit_statuses(123, 456)
+      end
+
+      it "sets OK when there are spaces" do
+        all_commits_signed_off = commit_factory [
+          "Fix all the bugs.\n\nSigned off by: Fix-It Felix Jr. <felixjr@fixit.example.com>",
+          "Missed some.\n\nSigned off by: Fix-It Felix Jr. <felixjr@fixit.example.com>",
+        ]
+        allow(subject.client).to receive(:pull_request_commits).and_return(all_commits_signed_off)
+        expect(subject).to receive(:dco_check_success).twice
+        expect(subject).not_to receive(:dco_check_failure)
+        subject.apply_commit_statuses(123, 456)
+      end
+
+      it "set OK regardless of capitalization" do
+        all_commits_signed_off = commit_factory [
+          "Fix all the bugs.\n\nsigned-off-by: Fix-It Felix Jr. <felixjr@fixit.example.com>",
+          "Missed some.\n\nSIGNED-OFF-BY: Fix-It Felix Jr. <felixjr@fixit.example.com>",
+        ]
+        allow(subject.client).to receive(:pull_request_commits).and_return(all_commits_signed_off)
+        expect(subject).to receive(:dco_check_success).twice
+        expect(subject).not_to receive(:dco_check_failure)
+        subject.apply_commit_statuses(123, 456)
+      end
     end
 
     it "sets failed status on commits without signed-offs" do
       no_commits_signed_off = commit_factory [
-          "I'm gonna wreck it.\n\nRalph",
-          "What's going on in this candy-coated heart of darkness?",
-        ]
+        "I'm gonna wreck it.\n\nRalph",
+        "What's going on in this candy-coated heart of darkness?",
+      ]
       allow(subject.client).to receive(:pull_request_commits).and_return(no_commits_signed_off)
       expect(subject).to receive(:dco_check_failure).twice
       subject.apply_commit_statuses(123, 456)

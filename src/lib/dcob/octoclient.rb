@@ -37,7 +37,7 @@ module Dcob
       # using map to return a collection of status creation responses
       commits.map do |commit|
         case commit[:commit][:message]
-        when /Signed-off-by: .+ <.+>/
+        when /Signed[-|\s]off[-|\s]by: .+ <.+>/i
           puts "Flagging SHA #{commit[:sha]} as succeeded; has DCO"
           dco_check_success(repository_id, commit[:sha])
         when /obvious fix/i
