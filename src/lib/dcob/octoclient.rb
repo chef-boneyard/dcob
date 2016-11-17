@@ -6,6 +6,10 @@ module Dcob
       new.hookit(repository, callback_url)
     end
 
+    def self.apply_commit_statuses(repository_id, pr_number)
+      new.apply_commit_statuses(repository_id, pr_number)
+    end
+
     def hookit(repository, callback_url)
       github_service_name = "web"
       hook_config = { url: callback_url,
@@ -26,6 +30,51 @@ module Dcob
       end
     rescue Octokit::UnprocessableEntity => e
       "Skipping #{repository} due to existing hook"
+    end
+
+    def apply_commit_statuses(repository_id, pr_number)
+      commits = client.pull_request_commits(repository_id, pr_number)
+      # using map to return a collection of status creation responses
+      commits.map do |commit|
+        case commit[:commit][:message]
+        when /Signed-off-by: .+ <.+>/
+          puts "Flagging SHA #{commit[:sha]} as succeeded; has DCO"
+          dco_check_success(repository_id, commit[:sha])
+        when /obvious fix/i
+          puts "Flagging SHA #{commit[:sha]} as succeeded; obvious fix declared"
+          obvious_fix_check_success(repository_id, commit[:sha])
+        else
+          puts "Flagging SHA #{commit[:sha]} as failed; no DCO"
+          dco_check_failure(repository_id, commit[:sha])
+        end
+      end
+    end
+
+    def dco_check_success(repository_id, commit_sha)
+      client.create_status(repository_id,
+                           commit_sha,
+                           "success",
+                           context: "DCO",
+                           target_url: DCO_INFO_URL,
+                           description: "This commit has a DCO Signed-off-by")
+    end
+
+    def dco_check_failure(repository_id, commit_sha)
+      client.create_status(repository_id,
+                           commit_sha,
+                           "failure",
+                           context: "DCO",
+                           target_url: DCO_INFO_URL,
+                           description: "This commit does not have a DCO Signed-off-by")
+    end
+
+    def obvious_fix_check_success(repository_id, commit_sha)
+      client.create_status(repository_id,
+                           commit_sha,
+                           "success",
+                           context: "DCO",
+                           target_url: DCO_INFO_URL,
+                           description: "This commit declared that it is an obvious fix")
     end
 
     def client

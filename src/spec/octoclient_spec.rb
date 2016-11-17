@@ -13,6 +13,12 @@ describe Dcob::Octoclient do
       Dcob::Octoclient.hookit("fake/repo", "https://test.example.com/payload")
     end
   end
+  describe "#apply_commit_statuses (class method)" do
+    it "punts to a new instance" do
+      expect_any_instance_of(Dcob::Octoclient).to receive(:apply_commit_statuses)
+      Dcob::Octoclient.apply_commit_statuses(6060, 842)
+    end
+  end
 
   describe "#hookit" do
     it "calls Octokit's create_hook API for a repository" do
@@ -58,6 +64,79 @@ describe Dcob::Octoclient do
         expect { subject.hookit("fake/repo", "https://test.example.com/payload") }
           .to raise_error(Octokit::NotFound)
       end
+    end
+  end
+
+  describe "#apply_commit_statuses" do
+    def commit_factory(messages)
+      messages.map.with_index(1) do |message, index|
+        { sha: index, commit: { message: message } }
+      end
+    end
+
+    it "sets OK status on commits with signed-offs" do
+      all_commits_signed_off = commit_factory [
+          "Fix all the bugs.\n\nSigned-off-by: Fix-It Felix Jr. <felixjr@fixit.example.com>",
+          "Missed some.\n\nSigned-off-by: Fix-It Felix Jr. <felixjr@fixit.example.com>",
+        ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(all_commits_signed_off)
+      expect(subject).to receive(:dco_check_success).twice
+      subject.apply_commit_statuses(123, 456)
+    end
+
+    it "sets failed status on commits without signed-offs" do
+      no_commits_signed_off = commit_factory [
+          "I'm gonna wreck it.\n\nRalph",
+          "What's going on in this candy-coated heart of darkness?",
+        ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(no_commits_signed_off)
+      expect(subject).to receive(:dco_check_failure).twice
+      subject.apply_commit_statuses(123, 456)
+    end
+
+    it "sets OK and failed as appropriate with multiple commits" do
+      only_some_commits_signed_off = commit_factory [
+          "But right now, you have to fix this go-kart for me.\n\nRalph",
+          "I don't have to do boo! Forgive my potty-mouth.\n\nSigned-off-by: Fix-It Felix Jr. <felixjr@fixit.example.com>",
+        ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(only_some_commits_signed_off)
+      expect(subject).to receive(:dco_check_failure).once
+      expect(subject).to receive(:dco_check_success).once
+      subject.apply_commit_statuses(123, 456)
+    end
+
+    it "sets OK status on commits invoking the obvious fix rule" do
+      obvious_fixes = commit_factory [
+        "This is an obvious fix.",
+        "This is an Obvious fix, too.",
+      ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(obvious_fixes)
+      expect(subject).to receive(:obvious_fix_check_success).twice
+      subject.apply_commit_statuses(123, 456)
+    end
+  end
+
+  describe "#dco_check_success" do
+    it "calls the Octokit client to create a successful commit DCO status" do
+      expect(subject.client).to receive(:create_status)
+      .with(:repo_id, :commit_sha, "success",
+            context: "DCO",
+            target_url: DCO_INFO_URL,
+            description: "This commit has a DCO Signed-off-by")
+
+      subject.dco_check_success(:repo_id, :commit_sha)
+    end
+  end
+
+  describe "#dco_check_failure" do
+    it "calls the Octokit client to create a failure commit DCO status" do
+      expect(subject.client).to receive(:create_status)
+      .with(:repo_id, :commit_sha, "failure",
+            context: "DCO",
+            target_url: DCO_INFO_URL,
+            description: "This commit does not have a DCO Signed-off-by")
+
+      subject.dco_check_failure :repo_id, :commit_sha
     end
   end
 end
