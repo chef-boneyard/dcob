@@ -1,6 +1,6 @@
 pkg_name=dcob
 pkg_origin=core
-pkg_version=_computed_
+pkg_version=_computed_in_a_function_below_
 pkg_description="This is a github bot to ensure every commit on a PR has the
   Signed-off-by attribution required by the Developer Certificate of Origin."
 pkg_upstream_url=https://github.com/habitat-sh/dcob
@@ -21,6 +21,8 @@ pkg_svc_run="dcob -o 0.0.0.0"
 pkg_expose=(4567)
 
 determine_version() {
+  # Ask the DCOB gem what version it is. Use that as the hab package version.
+  # Only have to set/bump version in one place like we would for any gem.
   pkg_version=$(ruby -I$PLAN_CONTEXT/../src/lib/dcob -rversion -e 'puts Dcob::VERSION')
   pkg_dirname=${pkg_name}-${pkg_version}
   pkg_filename=${pkg_dirname}.tar.gz
@@ -30,26 +32,24 @@ determine_version() {
 
 do_download() {
   determine_version
-  return 0
+
+  # Instead of downloading, build a gem based on the source in src/
+  cd $PLAN_CONTEXT/../src
+  gem build $pkg_name.gemspec
 }
 
 do_verify() {
+  # No download to verify.
   return 0
 }
 
 do_unpack() {
-  return 0
+  # Unpack the gem we built to the source cache path. Building then unpacking
+  # the gem reuses the file inclusion/exclusion rules defined in the gemspec.
+  gem unpack $PLAN_CONTEXT/../src/$pkg_name-$pkg_version.gem --target=$HAB_CACHE_SRC_PATH
 }
 
 do_build() {
-  cd $PLAN_CONTEXT/../src
-  # Build then unpack the gem to the source cache path to limit the
-  # files packaged to those defined as included in the gemspec
-  gem build $pkg_name.gemspec
-  gem unpack $pkg_name-$pkg_version.gem --target=$HAB_CACHE_SRC_PATH
-}
-
-do_install () {
   export GIT_DIR=$PLAN_CONTEXT/../.git # appease the git command in the gemspec
   export BUNDLE_SILENCE_ROOT_WARNING=1 GEM_PATH
   GEM_PATH="$(pkg_path_for core/bundler)"
@@ -58,7 +58,9 @@ do_install () {
     --without development \
     --path "bundle" \
     --binstubs
+}
 
+do_install () {
   fix_interpreter "bin/*" core/coreutils bin/env
   cp -a "." "$pkg_prefix"
 }
