@@ -4,7 +4,7 @@ pkg_version=0.1.0
 pkg_description="This is a github bot to ensure every commit on a PR has the
   Signed-off-by attribution required by the Developer Certificate of Origin."
 pkg_upstream_url=https://github.com/habitat-sh/dcob
-pkg_maintainer="The Habitat Maintainers <humans@habitat.sh>"
+pkg_maintainer="Chef Community Engineering Team <community@chef.io>"
 pkg_license=('MIT')
 pkg_source=false
 pkg_deps=(
