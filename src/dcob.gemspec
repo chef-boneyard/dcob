@@ -6,8 +6,8 @@ require "dcob/version"
 Gem::Specification.new do |spec|
   spec.name          = "dcob"
   spec.version       = Dcob::VERSION
-  spec.authors       = ["Adam Jacob"]
-  spec.email         = ["adam@chef.io"]
+  spec.authors       = ["Adam Jacob", "Thom May", "Robb Kidd"]
+  spec.email         = ["adam@chef.io", "tmay@chef.io", "rkidd@chef.io"]
 
   spec.summary       = "A github webhook bot that checks for the DCO"
   spec.description   = "A github webhook bot that checks for the DCO"
