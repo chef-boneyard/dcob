@@ -6,8 +6,8 @@ module Dcob
       new.hookit(repository, callback_url)
     end
 
-    def self.apply_commit_statuses(repository_id, pr_number)
-      new.apply_commit_statuses(repository_id, pr_number)
+    def self.apply_commit_statuses(repository_id, pr_number, metadata: nil, prometheus: nil)
+      new(prometheus).apply_commit_statuses(repository_id, pr_number, metadata)
     end
 
     def hookit(repository, callback_url)
@@ -32,7 +32,7 @@ module Dcob
       "Skipping #{repository} due to existing hook"
     end
 
-    def apply_commit_statuses(repository_id, pr_number)
+    def apply_commit_statuses(repository_id, pr_number, metadata)
       commits = client.pull_request_commits(repository_id, pr_number)
       # using map to return a collection of status creation responses
       commits.map do |commit|
@@ -40,12 +40,15 @@ module Dcob
         when /Signed[-|\s]off[-|\s]by: .+ <.+>/i
           puts "Flagging SHA #{commit[:sha]} as succeeded; has DCO"
           dco_check_success(repository_id, commit[:sha])
+          @dco_signoff.increment(repository: metadata["full_name"])
         when /obvious fix/i
           puts "Flagging SHA #{commit[:sha]} as succeeded; obvious fix declared"
           obvious_fix_check_success(repository_id, commit[:sha])
+          @obvious_fix.increment(repository: metadata["full_name"])
         else
           puts "Flagging SHA #{commit[:sha]} as failed; no DCO"
           dco_check_failure(repository_id, commit[:sha])
+          @no_dco_signoff.increment(repository: metadata["full_name"])
         end
       end
     end
@@ -75,6 +78,14 @@ module Dcob
                            context: "DCO",
                            target_url: DCO_INFO_URL,
                            description: "This commit declared that it is an obvious fix")
+    end
+
+    def initialize(prometheus = nil)
+      if prometheus
+        @no_dco_signoff = prometheus.counter(:no_dco_signoff, "The count of commits with no DCO sign off")
+        @dco_signoff = prometheus.counter(:dco_signoff, "The count of commits with a DCO sign off")
+        @obvious_fix = prometheus.counter(:obvious_fix, "The count of commits declared as an obvious fix")
+      end
     end
 
     def client
