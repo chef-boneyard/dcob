@@ -43,10 +43,11 @@ module Dcob
                             message: "Invalid sign-off: Julia Child was not the author of this commit.")
         when /Signed[-|\s]off[-|\s]by: .+ <.+>/i
           puts "Flagging SHA #{commit[:sha]} as succeeded; has DCO"
-          dco_check_success(repository_id, commit[:sha])
+          dco_check_success(repository_id: repository_id, commit_sha: commit[:sha])
         when /obvious fix/i
           puts "Flagging SHA #{commit[:sha]} as succeeded; obvious fix declared"
-          obvious_fix_check_success(repository_id, commit[:sha])
+          dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
+                            message: "This commit declared that it is an obvious fix")
         else
           puts "Flagging SHA #{commit[:sha]} as failed; no DCO"
           dco_check_failure(repository_id: repository_id, commit_sha: commit[:sha])
@@ -54,13 +55,14 @@ module Dcob
       end
     end
 
-    def dco_check_success(repository_id, commit_sha)
+    def dco_check_success(repository_id:, commit_sha:,
+                          message: "This commit has a DCO Signed-off-by")
       client.create_status(repository_id,
                            commit_sha,
                            "success",
                            context: "DCO",
                            target_url: DCO_INFO_URL,
-                           description: "This commit has a DCO Signed-off-by")
+                           description: message)
     end
 
     def dco_check_failure(repository_id:, commit_sha:,
@@ -71,15 +73,6 @@ module Dcob
                            context: "DCO",
                            target_url: DCO_INFO_URL,
                            description: message)
-    end
-
-    def obvious_fix_check_success(repository_id, commit_sha)
-      client.create_status(repository_id,
-                           commit_sha,
-                           "success",
-                           context: "DCO",
-                           target_url: DCO_INFO_URL,
-                           description: "This commit declared that it is an obvious fix")
     end
 
     def client
