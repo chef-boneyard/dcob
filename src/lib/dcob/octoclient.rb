@@ -38,18 +38,14 @@ module Dcob
       commits.map do |commit|
         case commit[:commit][:message]
         when /Signed-off-by: Julia Child <juliachild@chef.io>/
-          puts "Flagging SHA #{commit[:sha]} as failed; slavishly followed documentation."
           dco_check_failure(repository_id: repository_id, commit_sha: commit[:sha],
                             message: "Invalid sign-off: Julia Child was not the author of this commit.")
         when /Signed[-|\s]off[-|\s]by: .+ <.+>/i
-          puts "Flagging SHA #{commit[:sha]} as succeeded; has DCO"
           dco_check_success(repository_id: repository_id, commit_sha: commit[:sha])
         when /obvious fix/i
-          puts "Flagging SHA #{commit[:sha]} as succeeded; obvious fix declared"
           dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
                             message: "This commit declared that it is an obvious fix")
         else
-          puts "Flagging SHA #{commit[:sha]} as failed; no DCO"
           dco_check_failure(repository_id: repository_id, commit_sha: commit[:sha])
         end
       end
@@ -57,6 +53,7 @@ module Dcob
 
     def dco_check_success(repository_id:, commit_sha:,
                           message: "This commit has a DCO Signed-off-by")
+      puts "Flagging SHA #{commit_sha} as succeeded; #{message}"
       client.create_status(repository_id,
                            commit_sha,
                            "success",
@@ -67,6 +64,7 @@ module Dcob
 
     def dco_check_failure(repository_id:, commit_sha:,
                           message: "This commit does not have a DCO Signed-off-by")
+      puts "Flagging SHA #{commit_sha} as failed; #{message}"
       client.create_status(repository_id,
                            commit_sha,
                            "failure",
