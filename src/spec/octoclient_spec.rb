@@ -139,6 +139,16 @@ describe Dcob::Octoclient do
       expect(subject).to receive(:obvious_fix_check_success).twice
       subject.apply_commit_statuses(123, 456)
     end
+
+    it "sets failed on commits with contact information from our contributing doc" do
+      a_commit_from_julia = commit_factory [
+        "Signed-off-by: Julia Child <juliachild@chef.io>",
+      ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(a_commit_from_julia)
+      expect(subject).to receive(:dco_check_failure).with(123, 1, "Invalid sign-off: Julia Child was not the author of this commit.").once
+      expect(subject).not_to receive(:dco_check_success)
+      subject.apply_commit_statuses(123, 456)
+    end
   end
 
   describe "#dco_check_success" do

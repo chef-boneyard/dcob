@@ -37,6 +37,9 @@ module Dcob
       # using map to return a collection of status creation responses
       commits.map do |commit|
         case commit[:commit][:message]
+        when /Signed-off-by: Julia Child <juliachild@chef.io>/
+          puts "Flagging SHA #{commit[:sha]} as failed; slavishly followed documentation."
+          dco_check_failure(repository_id, commit[:sha], "Invalid sign-off: Julia Child was not the author of this commit.")
         when /Signed[-|\s]off[-|\s]by: .+ <.+>/i
           puts "Flagging SHA #{commit[:sha]} as succeeded; has DCO"
           dco_check_success(repository_id, commit[:sha])
@@ -59,13 +62,14 @@ module Dcob
                            description: "This commit has a DCO Signed-off-by")
     end
 
-    def dco_check_failure(repository_id, commit_sha)
+    def dco_check_failure(repository_id, commit_sha,
+                          message = "This commit does not have a DCO Signed-off-by")
       client.create_status(repository_id,
                            commit_sha,
                            "failure",
                            context: "DCO",
                            target_url: DCO_INFO_URL,
-                           description: "This commit does not have a DCO Signed-off-by")
+                           description: message)
     end
 
     def obvious_fix_check_success(repository_id, commit_sha)
