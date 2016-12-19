@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "dcob/version"
 require "sinatra"
 require "octokit"
