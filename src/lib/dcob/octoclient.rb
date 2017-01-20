@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "octokit"
 
 module Dcob
@@ -37,44 +38,40 @@ module Dcob
       # using map to return a collection of status creation responses
       commits.map do |commit|
         case commit[:commit][:message]
+        when /Signed-off-by: Julia Child <juliachild@chef.io>/
+          dco_check_failure(repository_id: repository_id, commit_sha: commit[:sha],
+                            message: "Invalid sign-off: Julia Child was not the author of this commit.")
         when /Signed[-|\s]off[-|\s]by: .+ <.+>/i
-          puts "Flagging SHA #{commit[:sha]} as succeeded; has DCO"
-          dco_check_success(repository_id, commit[:sha])
+          dco_check_success(repository_id: repository_id, commit_sha: commit[:sha])
         when /obvious fix/i
-          puts "Flagging SHA #{commit[:sha]} as succeeded; obvious fix declared"
-          obvious_fix_check_success(repository_id, commit[:sha])
+          dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
+                            message: "This commit declared that it is an obvious fix")
         else
-          puts "Flagging SHA #{commit[:sha]} as failed; no DCO"
-          dco_check_failure(repository_id, commit[:sha])
+          dco_check_failure(repository_id: repository_id, commit_sha: commit[:sha])
         end
       end
     end
 
-    def dco_check_success(repository_id, commit_sha)
+    def dco_check_success(repository_id:, commit_sha:,
+                          message: "This commit has a DCO Signed-off-by")
+      puts "Flagging SHA #{commit_sha} as succeeded; #{message}"
       client.create_status(repository_id,
                            commit_sha,
                            "success",
                            context: "DCO",
                            target_url: DCO_INFO_URL,
-                           description: "This commit has a DCO Signed-off-by")
+                           description: message)
     end
 
-    def dco_check_failure(repository_id, commit_sha)
+    def dco_check_failure(repository_id:, commit_sha:,
+                          message: "This commit does not have a DCO Signed-off-by")
+      puts "Flagging SHA #{commit_sha} as failed; #{message}"
       client.create_status(repository_id,
                            commit_sha,
                            "failure",
                            context: "DCO",
                            target_url: DCO_INFO_URL,
-                           description: "This commit does not have a DCO Signed-off-by")
-    end
-
-    def obvious_fix_check_success(repository_id, commit_sha)
-      client.create_status(repository_id,
-                           commit_sha,
-                           "success",
-                           context: "DCO",
-                           target_url: DCO_INFO_URL,
-                           description: "This commit declared that it is an obvious fix")
+                           description: message)
     end
 
     def client

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require "spec_helper"
 
 describe Dcob::Octoclient do
@@ -136,7 +137,18 @@ describe Dcob::Octoclient do
         "This is an Obvious fix, too.",
       ]
       allow(subject.client).to receive(:pull_request_commits).and_return(obvious_fixes)
-      expect(subject).to receive(:obvious_fix_check_success).twice
+      expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 1, message: "This commit declared that it is an obvious fix").once
+      expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 2, message: "This commit declared that it is an obvious fix").once
+      subject.apply_commit_statuses(123, 456)
+    end
+
+    it "sets failed on commits with contact information from our contributing doc" do
+      a_commit_from_julia = commit_factory [
+        "Signed-off-by: Julia Child <juliachild@chef.io>",
+      ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(a_commit_from_julia)
+      expect(subject).to receive(:dco_check_failure).with(repository_id: 123, commit_sha: 1, message: "Invalid sign-off: Julia Child was not the author of this commit.").once
+      expect(subject).not_to receive(:dco_check_success)
       subject.apply_commit_statuses(123, 456)
     end
   end
@@ -149,7 +161,18 @@ describe Dcob::Octoclient do
             target_url: DCO_INFO_URL,
             description: "This commit has a DCO Signed-off-by")
 
-      subject.dco_check_success(:repo_id, :commit_sha)
+      subject.dco_check_success(repository_id: :repo_id, commit_sha: :commit_sha)
+    end
+
+    it "accepts a message to include in the success result" do
+      expect(subject.client).to receive(:create_status)
+      .with(:repo_id, :commit_sha, "success",
+            context: "DCO",
+            target_url: DCO_INFO_URL,
+            description: "Customized!")
+
+      subject.dco_check_success(repository_id: :repo_id, commit_sha: :commit_sha,
+                                message: "Customized!")
     end
   end
 
@@ -161,7 +184,18 @@ describe Dcob::Octoclient do
             target_url: DCO_INFO_URL,
             description: "This commit does not have a DCO Signed-off-by")
 
-      subject.dco_check_failure :repo_id, :commit_sha
+      subject.dco_check_failure repository_id: :repo_id, commit_sha: :commit_sha
+    end
+
+    it "accepts a message to include in the failure result" do
+      expect(subject.client).to receive(:create_status)
+      .with(:repo_id, :commit_sha, "failure",
+            context: "DCO",
+            target_url: DCO_INFO_URL,
+            description: "Customized!")
+
+      subject.dco_check_failure(repository_id: :repo_id, commit_sha: :commit_sha,
+                                message: "Customized!")
     end
   end
 end
