@@ -8,20 +8,35 @@ describe Dcob::Octoclient do
       secret: "this_is_not_a_real_secret_token",
     }
   end
-  describe "#hookit (class method)" do
-    it "punts to a new instance" do
-      expect_any_instance_of(Dcob::Octoclient).to receive(:hookit)
-      Dcob::Octoclient.hookit("fake/repo", "https://test.example.com/payload")
-    end
+  let(:prometheus) { instance_double(Prometheus::Client::Registry) }
+
+  let(:new_repo_added) { instance_double(Prometheus::Client::Counter) }
+  let(:no_dco_signoff) { instance_double(Prometheus::Client::Counter) }
+  let(:dco_signoff) { instance_double(Prometheus::Client::Counter) }
+  let(:obvious_fix) { instance_double(Prometheus::Client::Counter) }
+
+  let(:subject_repo) { "fake/repo" }
+
+  subject do
+    described_class.new(prometheus)
   end
-  describe "#apply_commit_statuses (class method)" do
-    it "punts to a new instance" do
-      expect_any_instance_of(Dcob::Octoclient).to receive(:apply_commit_statuses)
-      Dcob::Octoclient.apply_commit_statuses(6060, 842)
-    end
+
+  before do
+    allow(prometheus).to receive(:counter).with(:new_repo_added, anything).and_return(new_repo_added)
+    allow(prometheus).to receive(:counter).with(:no_dco_signoff, anything).and_return(no_dco_signoff)
+    allow(prometheus).to receive(:counter).with(:dco_signoff, anything).and_return(dco_signoff)
+    allow(prometheus).to receive(:counter).with(:obvious_fix, anything).and_return(obvious_fix)
+
+    allow(no_dco_signoff).to receive(:increment)
+    allow(dco_signoff).to receive(:increment)
+    allow(obvious_fix).to receive(:increment)
   end
 
   describe "#hookit" do
+    before do
+      allow(new_repo_added).to receive(:increment)
+    end
+
     it "calls Octokit's create_hook API for a repository" do
       expect(subject.client).to receive(:create_hook).with("fake/repo", "web", hook_config, anything).and_return("happiness")
       subject.hookit("fake/repo", "https://test.example.com/payload")
@@ -30,6 +45,12 @@ describe Dcob::Octoclient do
     it "raises an exception with GitHub repo already has the webhook" do
       allow(subject.client).to receive(:create_hook).with("fake_repo", "web", hook_config, anything).and_raise(Octokit::UnprocessableEntity)
       expect(subject.hookit("fake_repo", "https://test.example.com/payload")).to match("Skipping fake_repo due to existing hook")
+    end
+
+    it "updates the count of repositories monitored" do
+      allow(subject.client).to receive(:create_hook).with("fake/repo", "web", hook_config, anything).and_return("happiness")
+      expect(new_repo_added).to receive(:increment)
+      subject.hookit("fake/repo", "https://test.example.com/payload")
     end
 
     context "retries" do
@@ -84,7 +105,8 @@ describe Dcob::Octoclient do
         allow(subject.client).to receive(:pull_request_commits).and_return(all_commits_signed_off)
         expect(subject).to receive(:dco_check_success).twice
         expect(subject).not_to receive(:dco_check_failure)
-        subject.apply_commit_statuses(123, 456)
+        expect(dco_signoff).to receive(:increment).with(repository: subject_repo).twice
+        subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
       end
 
       it "sets OK when there are spaces" do
@@ -94,8 +116,9 @@ describe Dcob::Octoclient do
         ]
         allow(subject.client).to receive(:pull_request_commits).and_return(all_commits_signed_off)
         expect(subject).to receive(:dco_check_success).twice
+        expect(dco_signoff).to receive(:increment).with(repository: subject_repo).twice
         expect(subject).not_to receive(:dco_check_failure)
-        subject.apply_commit_statuses(123, 456)
+        subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
       end
 
       it "set OK regardless of capitalization" do
@@ -105,8 +128,9 @@ describe Dcob::Octoclient do
         ]
         allow(subject.client).to receive(:pull_request_commits).and_return(all_commits_signed_off)
         expect(subject).to receive(:dco_check_success).twice
+        expect(dco_signoff).to receive(:increment).with(repository: subject_repo).twice
         expect(subject).not_to receive(:dco_check_failure)
-        subject.apply_commit_statuses(123, 456)
+        subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
       end
     end
 
@@ -117,7 +141,8 @@ describe Dcob::Octoclient do
       ]
       allow(subject.client).to receive(:pull_request_commits).and_return(no_commits_signed_off)
       expect(subject).to receive(:dco_check_failure).twice
-      subject.apply_commit_statuses(123, 456)
+      expect(no_dco_signoff).to receive(:increment).with(repository: subject_repo).twice
+      subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
     end
 
     it "sets OK and failed as appropriate with multiple commits" do
@@ -127,8 +152,10 @@ describe Dcob::Octoclient do
         ]
       allow(subject.client).to receive(:pull_request_commits).and_return(only_some_commits_signed_off)
       expect(subject).to receive(:dco_check_failure).once
+      expect(no_dco_signoff).to receive(:increment).with(repository: subject_repo)
       expect(subject).to receive(:dco_check_success).once
-      subject.apply_commit_statuses(123, 456)
+      expect(dco_signoff).to receive(:increment).with(repository: subject_repo)
+      subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
     end
 
     it "sets OK status on commits invoking the obvious fix rule" do
@@ -139,7 +166,8 @@ describe Dcob::Octoclient do
       allow(subject.client).to receive(:pull_request_commits).and_return(obvious_fixes)
       expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 1, message: "This commit declared that it is an obvious fix").once
       expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 2, message: "This commit declared that it is an obvious fix").once
-      subject.apply_commit_statuses(123, 456)
+      expect(obvious_fix).to receive(:increment).with(repository: subject_repo).twice
+      subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
     end
 
     it "sets failed on commits with contact information from our contributing doc" do
@@ -148,8 +176,9 @@ describe Dcob::Octoclient do
       ]
       allow(subject.client).to receive(:pull_request_commits).and_return(a_commit_from_julia)
       expect(subject).to receive(:dco_check_failure).with(repository_id: 123, commit_sha: 1, message: "Invalid sign-off: Julia Child was not the author of this commit.").once
+      expect(no_dco_signoff).to receive(:increment).with(repository: subject_repo)
       expect(subject).not_to receive(:dco_check_success)
-      subject.apply_commit_statuses(123, 456)
+      subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
     end
   end
 

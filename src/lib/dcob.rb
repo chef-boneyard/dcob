@@ -7,14 +7,34 @@ require "json"
 require "pp"
 require "openssl"
 require "toml"
+require "rack"
+require "prometheus/client"
+require "prometheus/client/rack/collector"
+require "prometheus/client/rack/exporter"
 
 module Dcob
   class Server < Sinatra::Base
+    use Rack::Deflater, if: ->(env, status, headers, body) { body.any? && body[0].length > 512 }
+    use Prometheus::Client::Rack::Collector
+    use Prometheus::Client::Rack::Exporter
+
+    attr_reader :octoclient
+
+    def initialize(app = nil)
+      super
+      prometheus = Prometheus::Client.registry
+      @octoclient = Dcob::Octoclient.new(prometheus)
+      @failed_signatures = prometheus.counter(:failed_github_signature, "The count of failed GitHub signatures")
+    end
+
     before do
       @payload_body = request.body.read
       request_signature = request.env.fetch("HTTP_X_HUB_SIGNATURE", "")
       check_signature = "sha1=" + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha1"), SECRET_TOKEN, @payload_body)
-      return halt 500, "Signatures didn't match!" unless Rack::Utils.secure_compare(check_signature, request_signature)
+      unless Rack::Utils.secure_compare(check_signature, request_signature)
+        @failed_signatures.increment unless request_signature.empty?
+        return halt 500, "Signatures didn't match!"
+      end
     end
 
     set(:event_type) do |type|
@@ -32,12 +52,12 @@ module Dcob
         repo = JSON.parse(@payload_body)
         if !repo["repository"]["private"] && %w{created publicized}.include?(repo["action"])
           callback_url = request.url
-          result = Dcob::Octoclient.hookit(repo["repository"]["full_name"], callback_url)
+          octoclient.hookit(repo["repository"]["full_name"], callback_url)
           [200, {}, "Hooked #{repo["repository"]["full_name"]}"]
         else
           [200, {}, "Nothing to do here."]
         end
-      rescue Octokit::Error => e
+      rescue Octokit::Error
         [500, {}, "nope"]
       end
     end
@@ -47,7 +67,7 @@ module Dcob
       repo_id = pr["repository"]["id"]
       if %w{opened reopened synchronize}.include? pr["action"]
         puts "Processing #{pr['pull_request']['head']['repo']['name']} ##{pr['number']}"
-        Dcob::Octoclient.apply_commit_statuses(repo_id, pr["number"])
+        octoclient.apply_commit_statuses(repo_id, pr["number"], repo_name: pr["repository"]["full_name"])
       end
       "Please Drive Through!"
     end

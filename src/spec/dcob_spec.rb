@@ -97,7 +97,7 @@ describe "DCO Bot webhook server" do
       pr_number = parsed_payload["number"]
 
       expect_any_instance_of(Dcob::Octoclient).to receive(:apply_commit_statuses)
-        .with(repo_id, pr_number)
+        .with(repo_id, pr_number, repo_name: "baxterthehacker/public-repo")
         .and_return("Commit statuses created.")
       post "/payload", payload_body, headers
       expect(last_response).to be_ok
