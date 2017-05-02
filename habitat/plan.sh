@@ -1,12 +1,10 @@
 pkg_name=dcob
 pkg_origin=chef_community_engineering
-pkg_version=_computed_in_a_function_below_
 pkg_description="This is a github bot to ensure every commit on a PR has the
   Signed-off-by attribution required by the Developer Certificate of Origin."
 pkg_upstream_url=https://github.com/habitat-sh/dcob
 pkg_maintainer="Chef Community Engineering Team <community@chef.io>"
 pkg_license=('MIT')
-pkg_source=false
 pkg_deps=(
   core/cacerts
   core/coreutils
@@ -20,27 +18,21 @@ pkg_bin_dirs=(bin)
 pkg_svc_run="dcob -o 0.0.0.0"
 pkg_expose=(4567)
 
-determine_version() {
+pkg_version() {
   # Ask the DCOB gem what version it is. Use that as the hab package version.
   # Only have to set/bump version in one place like we would for any gem.
-  pkg_version=$(ruby -I$PLAN_CONTEXT/../src/lib/dcob -rversion -e 'puts Dcob::VERSION')
-  pkg_dirname=${pkg_name}-${pkg_version}
-  pkg_filename=${pkg_dirname}.tar.gz
-  pkg_prefix=$HAB_PKG_PATH/${pkg_origin}/${pkg_name}/${pkg_version}/${pkg_release}
-  pkg_artifact="$HAB_CACHE_ARTIFACT_PATH/${pkg_origin}-${pkg_name}-${pkg_version}-${pkg_release}-${pkg_target}.${_artifact_ext}"
+  ruby -I"$SRC_PATH/src/lib/dcob" -rversion -e 'puts Dcob::VERSION'
+}
+
+de_before() {
+  do_default_before
+  update_pkg_version
 }
 
 do_download() {
-  determine_version
-
   # Instead of downloading, build a gem based on the source in src/
-  cd $PLAN_CONTEXT/../src
+  cd "$SRC_PATH/src"
   gem build $pkg_name.gemspec
-}
-
-do_verify() {
-  # No download to verify.
-  return 0
 }
 
 do_unpack() {
@@ -50,9 +42,10 @@ do_unpack() {
 }
 
 do_build() {
-  export GIT_DIR=$PLAN_CONTEXT/../.git # appease the git command in the gemspec
-  export BUNDLE_SILENCE_ROOT_WARNING=1 GEM_PATH
+  export GIT_DIR=$SRC_PATH/.git # appease the git command in the gemspec
   GEM_PATH="$(pkg_path_for core/bundler)"
+  export BUNDLE_SILENCE_ROOT_WARNING=1 GEM_PATH
+  cd "$CACHE_PATH"
 
   bundle install --jobs "$(nproc)" --retry 5 --standalone \
     --without development \
@@ -61,6 +54,7 @@ do_build() {
 }
 
 do_install () {
+  cd "$CACHE_PATH"
   fix_interpreter "bin/*" core/coreutils bin/env
   cp -a "." "$pkg_prefix"
 }
