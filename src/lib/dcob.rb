@@ -8,15 +8,14 @@ require "pp"
 require "openssl"
 require "toml"
 require "rack"
-require "prometheus/client"
-require "prometheus/client/rack/collector"
-require "prometheus/client/rack/exporter"
+require "prometheus/middleware/collector"
+require "prometheus/middleware/exporter"
 
 module Dcob
   class Server < Sinatra::Base
     use Rack::Deflater, if: ->(env, status, headers, body) { body.any? && body[0].length > 512 }
-    use Prometheus::Client::Rack::Collector
-    use Prometheus::Client::Rack::Exporter
+    use Prometheus::Middleware::Collector
+    use Prometheus::Middleware::Exporter
 
     attr_reader :octoclient
 

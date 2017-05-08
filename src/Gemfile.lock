@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    dcob (0.1.0)
+    dcob (1.0.0)
       octokit (~> 4.3)
       prometheus-client (~> 0.6)
       sinatra (~> 1.4)
@@ -19,7 +19,7 @@ GEM
     crack (0.4.3)
       safe_yaml (~> 1.0.0)
     diff-lcs (1.2.5)
-    faraday (0.11.0)
+    faraday (0.12.1)
       multipart-post (>= 1.2, < 3)
     ffi (1.9.14)
     formatador (0.2.5)
@@ -49,12 +49,12 @@ GEM
     notiffany (0.1.1)
       nenv (~> 0.1)
       shellany (~> 0.0)
-    octokit (4.6.2)
+    octokit (4.7.0)
       sawyer (~> 0.8.0, >= 0.5.3)
     parser (2.3.1.4)
       ast (~> 2.2)
     powerpack (0.1.1)
-    prometheus-client (0.6.0)
+    prometheus-client (0.7.0)
       quantile (~> 0.2.0)
     pry (0.10.4)
       coderay (~> 1.1.0)
