@@ -8,15 +8,14 @@ require "pp"
 require "openssl"
 require "toml"
 require "rack"
-require "prometheus/client"
-require "prometheus/client/rack/collector"
-require "prometheus/client/rack/exporter"
+require "prometheus/middleware/collector"
+require "prometheus/middleware/exporter"
 
 module Dcob
   class Server < Sinatra::Base
     use Rack::Deflater, if: ->(env, status, headers, body) { body.any? && body[0].length > 512 }
-    use Prometheus::Client::Rack::Collector
-    use Prometheus::Client::Rack::Exporter
+    use Prometheus::Middleware::Collector
+    use Prometheus::Middleware::Exporter
 
     attr_reader :octoclient
 
@@ -80,12 +79,13 @@ if ENV["GITHUB_LOGIN"] && ENV["GITHUB_ACCESS_TOKEN"] && ENV["GITHUB_SECRET_TOKEN
   SECRET_TOKEN = ENV["GITHUB_SECRET_TOKEN"]
   DCO_INFO_URL = ENV["DCO_INFO_URL"] || "http://developercertificate.org/"
 else
-  unless File.exist?("config.toml")
+  config_path = "config/config.toml"
+  unless File.exist?(config_path)
     puts "You need to provide a config.toml"
     exit 1
   end
 
-  config = TOML.load_file("config.toml")
+  config = TOML.load_file(config_path)
   if config["cfg"]["login"]
     Octokit.login = config["cfg"]["login"]
   else

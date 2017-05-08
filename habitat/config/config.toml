@@ -1,0 +1,6 @@
+[cfg]
+login = "{{cfg.login}}"
+access_token = "{{cfg.access_token}}"
+secret_token = "{{cfg.secret_token}}"
+dco_info_url = "{{cfg.dco_info_url}}"
+dco_webhook_url = "{{cfg.dco_webhook_url}}"
