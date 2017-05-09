@@ -1,0 +1,14 @@
+#!/bin/sh
+export HOME=/hab/svc/dcob/data
+export RACK_ENV=production
+
+cd /hab/svc/dcob
+
+if [ "$(whoami)" = "root" ]; then
+  exec chpst \
+    -U hab:hab \
+    -u hab:hab \
+    dcob -s Puma -o 0.0.0.0 2>&1
+else
+  exec dcob -s Puma -o 0.0.0.0 2>&1
+fi

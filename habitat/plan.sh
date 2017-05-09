@@ -12,9 +12,11 @@ pkg_deps=(
 )
 pkg_build_deps=(
   core/git
+  core/gcc
+  core/openssl
+  core/make
 )
 pkg_bin_dirs=(bin)
-pkg_svc_run="dcob -o 0.0.0.0"
 pkg_expose=(4567)
 
 pkg_version() {
