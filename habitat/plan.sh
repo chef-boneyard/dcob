@@ -22,7 +22,7 @@ pkg_expose=(4567)
 pkg_version() {
   # Ask the DCOB gem what version it is. Use that as the hab package version.
   # Only have to set/bump version in one place like we would for any gem.
-  hab pkg exec core/ruby ruby -I$PLAN_CONTEXT/../src/lib/dcob -rversion -e 'puts Dcob::VERSION'
+  ruby -I$PLAN_CONTEXT/../src/lib/dcob -rversion -e 'puts Dcob::VERSION'
 }
 
 do_before() {
