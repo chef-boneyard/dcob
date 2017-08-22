@@ -1,6 +1,7 @@
 #!/bin/sh
 export HOME=/hab/svc/dcob/data
 export RACK_ENV=production
+export SSL_CERT_FILE="$(hab pkg path core/cacerts)/ssl/certs/cacert.pem"
 
 cd /hab/svc/dcob
 
