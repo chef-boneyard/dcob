@@ -4,13 +4,14 @@ require "octokit"
 module Dcob
   class Octoclient
 
-    attr_reader :no_dco_signoff, :dco_signoff, :obvious_fix, :new_repo_added
+    attr_reader :no_dco_signoff, :dco_signoff, :obvious_fix, :new_repo_added, :revert_commit
 
     def initialize(prometheus)
       @new_repo_added = prometheus.counter(:new_repo_added, "Repositories being monitored")
       @no_dco_signoff = prometheus.counter(:no_dco_signoff, "The count of commits with no DCO sign off")
       @dco_signoff = prometheus.counter(:dco_signoff, "The count of commits with a DCO sign off")
       @obvious_fix = prometheus.counter(:obvious_fix, "The count of commits declared as an obvious fix")
+      @revert_commit = prometheus.counter(:revert_commit, "The count of revert commits accepted.")
     end
 
     def hookit(repository, callback_url)
@@ -52,6 +53,10 @@ module Dcob
           dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
                             message: "This commit declared that it is an obvious fix")
           obvious_fix.increment(repository: repo_name)
+        when /\ARevert\s.*^This reverts commit/m
+          dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
+                            message: "This commit is a revert and allowed.")
+          revert_commit.increment(repository: repo_name)
         else
           dco_check_failure(repository_id: repository_id, commit_sha: commit[:sha])
           no_dco_signoff.increment(repository: repo_name)

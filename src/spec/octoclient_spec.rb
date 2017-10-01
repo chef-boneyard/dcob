@@ -14,6 +14,7 @@ describe Dcob::Octoclient do
   let(:no_dco_signoff) { instance_double(Prometheus::Client::Counter) }
   let(:dco_signoff) { instance_double(Prometheus::Client::Counter) }
   let(:obvious_fix) { instance_double(Prometheus::Client::Counter) }
+  let(:revert_commit) { instance_double(Prometheus::Client::Counter) }
 
   let(:subject_repo) { "fake/repo" }
 
@@ -26,6 +27,7 @@ describe Dcob::Octoclient do
     allow(prometheus).to receive(:counter).with(:no_dco_signoff, anything).and_return(no_dco_signoff)
     allow(prometheus).to receive(:counter).with(:dco_signoff, anything).and_return(dco_signoff)
     allow(prometheus).to receive(:counter).with(:obvious_fix, anything).and_return(obvious_fix)
+    allow(prometheus).to receive(:counter).with(:revert_commit, anything).and_return(revert_commit)
 
     allow(no_dco_signoff).to receive(:increment)
     allow(dco_signoff).to receive(:increment)
@@ -167,6 +169,16 @@ describe Dcob::Octoclient do
       expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 1, message: "This commit declared that it is an obvious fix").once
       expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 2, message: "This commit declared that it is an obvious fix").once
       expect(obvious_fix).to receive(:increment).with(repository: subject_repo).twice
+      subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
+    end
+
+    it "sets OK status on revert commits that follow the git CLI's standard pattern" do
+      a_revert_commit = commit_factory [
+        "Revert \"(someprevioussummary)\"\n\nThis reverts commit (acommitsha)",
+      ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(a_revert_commit)
+      expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 1, message: "This commit is a revert and allowed.").once
+      expect(revert_commit).to receive(:increment).with(repository: subject_repo).once
       subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
     end
 
