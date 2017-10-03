@@ -4,7 +4,7 @@ require "octokit"
 module Dcob
   class Octoclient
 
-    attr_reader :no_dco_signoff, :dco_signoff, :obvious_fix, :new_repo_added, :revert_commit
+    attr_reader :no_dco_signoff, :dco_signoff, :obvious_fix, :merge_commit, :new_repo_added, :revert_commit
 
     def initialize(prometheus)
       @new_repo_added = prometheus.counter(:new_repo_added, "Repositories being monitored")
@@ -12,6 +12,7 @@ module Dcob
       @dco_signoff = prometheus.counter(:dco_signoff, "The count of commits with a DCO sign off")
       @obvious_fix = prometheus.counter(:obvious_fix, "The count of commits declared as an obvious fix")
       @revert_commit = prometheus.counter(:revert_commit, "The count of revert commits accepted.")
+      @merge_commit = prometheus.counter(:merge_commit, "The count of merge commits.")
     end
 
     def hookit(repository, callback_url)
@@ -57,6 +58,10 @@ module Dcob
           dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
                             message: "This commit is a revert and allowed.")
           revert_commit.increment(repository: repo_name)
+        when /\AMerge pull request \#/
+          dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
+                            message: "This is a merge commit and allowed.")
+          merge_commit.increment(repository: repo_name)
         else
           dco_check_failure(repository_id: repository_id, commit_sha: commit[:sha])
           no_dco_signoff.increment(repository: repo_name)

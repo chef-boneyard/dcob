@@ -15,6 +15,7 @@ describe Dcob::Octoclient do
   let(:dco_signoff) { instance_double(Prometheus::Client::Counter) }
   let(:obvious_fix) { instance_double(Prometheus::Client::Counter) }
   let(:revert_commit) { instance_double(Prometheus::Client::Counter) }
+  let(:merge_commit) { instance_double(Prometheus::Client::Counter) }
 
   let(:subject_repo) { "fake/repo" }
 
@@ -28,6 +29,7 @@ describe Dcob::Octoclient do
     allow(prometheus).to receive(:counter).with(:dco_signoff, anything).and_return(dco_signoff)
     allow(prometheus).to receive(:counter).with(:obvious_fix, anything).and_return(obvious_fix)
     allow(prometheus).to receive(:counter).with(:revert_commit, anything).and_return(revert_commit)
+    allow(prometheus).to receive(:counter).with(:merge_commit, anything).and_return(merge_commit)
 
     allow(no_dco_signoff).to receive(:increment)
     allow(dco_signoff).to receive(:increment)
@@ -179,6 +181,16 @@ describe Dcob::Octoclient do
       allow(subject.client).to receive(:pull_request_commits).and_return(a_revert_commit)
       expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 1, message: "This commit is a revert and allowed.").once
       expect(revert_commit).to receive(:increment).with(repository: subject_repo).once
+      subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
+    end
+
+    it "sets OK status on GitHub merge commits" do
+      a_merge_commit = commit_factory [
+        "Merge pull request #42 from contributor/awesome_feature_branch\nadd an awesome feature",
+      ]
+      allow(subject.client).to receive(:pull_request_commits).and_return(a_merge_commit)
+      expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 1, message: "This is a merge commit and allowed.").once
+      expect(merge_commit).to receive(:increment).with(repository: subject_repo).once
       subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
     end
 
