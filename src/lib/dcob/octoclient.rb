@@ -58,7 +58,7 @@ module Dcob
           dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
                             message: "This commit is a revert and allowed.")
           revert_commit.increment(repository: repo_name)
-        when /\AMerge pull request \#/
+        when /\AMerge (pull request|branch)/
           dco_check_success(repository_id: repository_id, commit_sha: commit[:sha],
                             message: "This is a merge commit and allowed.")
           merge_commit.increment(repository: repo_name)
