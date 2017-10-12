@@ -187,10 +187,12 @@ describe Dcob::Octoclient do
     it "sets OK status on GitHub merge commits" do
       a_merge_commit = commit_factory [
         "Merge pull request #42 from contributor/awesome_feature_branch\nadd an awesome feature",
+        "Merge branch 'master' into contributor/awesome_feature_branch",
       ]
       allow(subject.client).to receive(:pull_request_commits).and_return(a_merge_commit)
       expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 1, message: "This is a merge commit and allowed.").once
-      expect(merge_commit).to receive(:increment).with(repository: subject_repo).once
+      expect(subject).to receive(:dco_check_success).with(repository_id: 123, commit_sha: 2, message: "This is a merge commit and allowed.").once
+      expect(merge_commit).to receive(:increment).with(repository: subject_repo).twice
       subject.apply_commit_statuses(123, 456, repo_name: subject_repo)
     end
 
