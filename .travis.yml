@@ -5,7 +5,7 @@ bundler_args: "--jobs 3"
 gemfile: src/Gemfile
 language: ruby
 rvm:
-  - 2.3.1
+  - 2.3.8
 script:
   - cd src && bundle exec rake
 sudo: false
