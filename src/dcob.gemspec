@@ -40,6 +40,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "octokit", "~> 4.3"
   spec.add_dependency "sinatra", "~> 1.4"
-  spec.add_dependency "toml-rb", "~> 0.3"
+  spec.add_dependency "toml-rb", ">= 0.3", "< 3.0"
   spec.add_dependency "prometheus-client", "~> 0.6"
 end
