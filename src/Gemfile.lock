@@ -21,7 +21,7 @@ GEM
     diff-lcs (1.2.5)
     faraday (0.12.1)
       multipart-post (>= 1.2, < 3)
-    ffi (1.9.14)
+    ffi (1.13.0)
     formatador (0.2.5)
     guard (2.14.0)
       formatador (>= 0.2.4)
@@ -46,6 +46,7 @@ GEM
     method_source (0.8.2)
     multipart-post (2.0.0)
     nenv (0.3.0)
+    nio4r (2.5.2)
     notiffany (0.1.1)
       nenv (~> 0.1)
       shellany (~> 0.0)
@@ -60,6 +61,8 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
+    puma (4.3.5)
+      nio4r (~> 2.0)
     quantile (0.2.0)
     rack (1.6.5)
     rack-protection (1.5.3)
@@ -67,7 +70,7 @@ GEM
     rack-test (0.6.3)
       rack (>= 1.0)
     rainbow (2.1.0)
-    rake (11.3.0)
+    rake (13.0.1)
     rb-fsevent (0.9.7)
     rb-inotify (0.9.7)
       ffi (>= 0.5.0)
@@ -117,13 +120,14 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.12)
+  bundler
   chefstyle (~> 0.4)
   dcob!
   guard
   guard-rspec
+  puma
   rack-test (~> 0.6)
-  rake (~> 11.3)
+  rake (>= 12.0)
   rb-readline
   rspec (~> 3.4)
   webmock (~> 2.1)
