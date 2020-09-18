@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec", "~> 3.4"
   spec.add_development_dependency "rack-test", "~> 0.6"
   spec.add_development_dependency "webmock", "~> 2.1"
-  spec.add_development_dependency "chefstyle", "~> 0.4"
+  spec.add_development_dependency "chefstyle", "~> 1.4"
   spec.add_development_dependency "guard"
   spec.add_development_dependency "guard-rspec"
   spec.add_development_dependency "rb-readline"
